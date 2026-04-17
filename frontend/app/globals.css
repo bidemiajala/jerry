@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-green: #4ade80;
+  --neon-cyan: #38bdf8;
+  --neon-orange: #fb923c;
+  --neon-purple: #c084fc;
+  --terminal-bg: #0d1117;
+  --terminal-surface: #161b22;
+  --terminal-border: #21262d;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--terminal-bg);
+  color: #c9d1d9;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--terminal-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--terminal-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #30363d;
+}
+
+
+/* Selection */
+::selection {
+  background: rgba(74, 222, 128, 0.15);
+  color: #c9d1d9;
+}
+
+/* Subtle accent text — no harsh glow */
+.text-glow-green  { color: #4ade80; }
+.text-glow-cyan   { color: #38bdf8; }
+.text-glow-orange { color: #fb923c; }
+.text-glow-purple { color: #c084fc; }
+
+/* Recharts overrides */
+.recharts-wrapper {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+.recharts-cartesian-axis-tick text {
+  fill: #6b7280 !important;
+  font-size: 11px !important;
+}
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}

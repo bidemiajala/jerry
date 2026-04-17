@@ -1,22 +1,21 @@
 import { defineConfig, devices } from '@playwright/test';
 
-declare global {
-  interface PlaywrightFixtures {
-    apiBaseURL: string;
-  }
-}
-
 export default defineConfig({
   testDir: './playwright',
+  outputDir: './playwright-report/artifacts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [
+    ['html', { outputFolder: 'playwright-report' }],
+    ['json', { outputFile: 'playwright-report/results.json' }],
+  ],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    video: 'on-first-retry',
     testIdAttribute: 'data-testid',
   },
   projects: [
@@ -33,22 +32,12 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
   ],
-  webServer: [
-    {
-      command: 'cd backend && npm run test:server',
-      url: 'http://localhost:5001/api/health',
-      timeout: 120000, // 2 minutes timeout
-      reuseExistingServer: !process.env.CI,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-    {
-      command: 'cd frontend && npm start',
-      url: 'http://localhost:3000',
-      timeout: 120000, // 2 minutes timeout
-      reuseExistingServer: !process.env.CI,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-  ],
-}); 
+  webServer: {
+    command: 'cd frontend && npm run dev',
+    url: 'http://localhost:3000',
+    timeout: 120000,
+    reuseExistingServer: !process.env.CI,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  },
+});
