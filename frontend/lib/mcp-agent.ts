@@ -1,5 +1,3 @@
-import { chromium } from 'playwright'
-import type { Page, Browser } from 'playwright'
 import type { MCPAction } from '@/types'
 import { getClient, MODEL } from './anthropic'
 
@@ -101,7 +99,8 @@ const PLAYWRIGHT_TOOLS = [
   },
 ]
 
-async function executeTool(page: Page, name: string, input: Record<string, unknown>): Promise<string> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function executeTool(page: any, name: string, input: Record<string, unknown>): Promise<string> {
   try {
     switch (name) {
       case 'browser_navigate': {
@@ -169,9 +168,16 @@ Use data-testid selectors like: [data-testid="btn-signup"]`
     { role: 'user', content: instruction },
   ]
 
-  let browser: Browser | null = null
+  if (process.env.VERCEL) {
+    yield { action: 'error', value: 'Browser automation is not available on Vercel. Run locally or on a dedicated server.', timestamp: Date.now(), success: false }
+    return
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let browser: any = null
 
   try {
+    const { chromium } = await import('playwright')
     browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] })
     const page = await browser.newPage()
 

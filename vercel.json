@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd frontend && npm run build && npx playwright install chromium --with-deps",
+  "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/.next",
   "framework": "nextjs",
   "installCommand": "cd frontend && npm install",

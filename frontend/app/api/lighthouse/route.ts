@@ -4,7 +4,9 @@ import { checkRateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/ra
 import { guardUrl } from '@/lib/input-guard'
 import type { LighthouseThresholds } from '@/types'
 
-export const maxDuration = 60 // Lighthouse can take up to ~30s
+export const maxDuration = 60
+
+const PSI_API = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed'
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
@@ -22,46 +24,31 @@ export async function POST(req: NextRequest) {
   const thresholds = body.thresholds as LighthouseThresholds
 
   try {
-    const { chromium } = await import('playwright')
-    const lighthouse = (await import('lighthouse')).default
-    const net = await import('net')
+    const psiUrl = new URL(PSI_API)
+    psiUrl.searchParams.set('url', parsedUrl.href)
+    psiUrl.searchParams.set('strategy', 'desktop')
+    ;['performance', 'accessibility', 'best-practices', 'seo'].forEach(c =>
+      psiUrl.searchParams.append('category', c)
+    )
+    if (process.env.PAGESPEED_API_KEY) {
+      psiUrl.searchParams.set('key', process.env.PAGESPEED_API_KEY)
+    }
 
-    // Find a free port for Chrome's CDP remote debugging
-    const cdpPort = await new Promise<number>((resolve, reject) => {
-      const srv = net.createServer()
-      srv.listen(0, () => {
-        const port = (srv.address() as { port: number }).port
-        srv.close(() => resolve(port))
-      })
-      srv.on('error', reject)
-    })
+    const res = await fetch(psiUrl.toString())
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err?.error?.message ?? `PageSpeed API returned ${res.status}`)
+    }
+    const data = await res.json()
+    const cats = data.lighthouseResult?.categories
 
-    // Launch with --remote-debugging-port so Lighthouse can attach via standard CDP
-    const browser = await chromium.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox', `--remote-debugging-port=${cdpPort}`],
-    })
+    if (!cats) throw new Error('No Lighthouse data returned from PageSpeed API')
 
-    let scores: { performance: number; accessibility: number; best_practices: number; seo: number } | null = null
-
-    try {
-      const result = await lighthouse(parsedUrl.href, {
-        port: cdpPort,
-        output: 'json',
-        logLevel: 'silent',
-        onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
-      })
-
-      if (!result) throw new Error('Lighthouse returned no result')
-
-      const cats = result.lhr.categories
-      scores = {
-        performance:    Math.round((cats['performance']?.score    ?? 0) * 100),
-        accessibility:  Math.round((cats['accessibility']?.score  ?? 0) * 100),
-        best_practices: Math.round((cats['best-practices']?.score ?? 0) * 100),
-        seo:            Math.round((cats['seo']?.score            ?? 0) * 100),
-      }
-    } finally {
-      await browser.close()
+    const scores = {
+      performance:    Math.round((cats['performance']?.score    ?? 0) * 100),
+      accessibility:  Math.round((cats['accessibility']?.score  ?? 0) * 100),
+      best_practices: Math.round((cats['best-practices']?.score ?? 0) * 100),
+      seo:            Math.round((cats['seo']?.score            ?? 0) * 100),
     }
 
     const passed =
@@ -76,7 +63,6 @@ export async function POST(req: NextRequest) {
       const saved = await insertLighthouseReport(report)
       return NextResponse.json({ ...report, id: saved.id, created_at: saved.created_at })
     } catch {
-      // DB not configured — still return scores
       return NextResponse.json(report)
     }
   } catch (err) {
