@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 import TerminalCard from '@/components/ui/TerminalCard'
 import GlowButton from '@/components/ui/GlowButton'
 import NeonBadge from '@/components/ui/NeonBadge'
 import LiveLogFeed from '@/components/test-runner/LiveLogFeed'
 import HealingReport from '@/components/test-runner/HealingReport'
 import type { TestCase, MCPAction } from '@/types'
+import HowItWorks, { HowItWorksSection, HowItWorksCode, HowItWorksCallout } from '@/components/ui/HowItWorks'
+
+const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 
 type RunMode = 'playwright' | 'mcp'
 type Browser = 'chromium' | 'firefox' | 'webkit'
@@ -144,6 +146,27 @@ export default function TestRunnerPage() {
         </p>
       </div>
 
+      <HowItWorks>
+        <HowItWorksSection title="Playwright mode">
+          Jerry spawns a real <code>npx playwright test</code> process against the repo. stdout/stderr stream back line-by-line via SSE. After the run, the JSON reporter output is parsed to extract pass/fail counts and individual test case results, which are persisted to Supabase.
+        </HowItWorksSection>
+        <HowItWorksSection title="Self-healing selectors">
+          Each test uses a custom Playwright fixture that wraps <code>page.locator()</code>. If the primary selector (data-testid) fails, it tries 3 fallbacks in order: ARIA role, visible text, then CSS class. When a fallback fires, the healing is recorded to Supabase and surfaces in the Healing tab.
+        </HowItWorksSection>
+        <HowItWorksCode>{`// Fallback chain (healing-fixture.ts)
+async locate(selector: string) {
+  for (const strategy of ['testid', 'aria', 'text', 'css']) {
+    try { return await page.locator(selector) } catch {}
+  }
+}`}</HowItWorksCode>
+        <HowItWorksSection title="MCP agent mode">
+          In MCP mode, Claude (Haiku) receives your instruction and a set of browser tool definitions. It decides which tools to call, Jerry executes each one against a real Playwright browser, and feeds the actual DOM result back to Claude — creating a genuine observe-act loop rather than a simulation.
+        </HowItWorksSection>
+        <HowItWorksCallout>
+          Why this matters for QE: self-healing means your test suite survives minor UI refactors without manual selector updates. MCP mode means a non-technical team member can describe a user journey and Jerry will execute and verify it.
+        </HowItWorksCallout>
+      </HowItWorks>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Controls panel */}
         <div className="space-y-4">
@@ -278,6 +301,7 @@ export default function TestRunnerPage() {
           )}
         </div>
       </div>
+
     </div>
   )
 }

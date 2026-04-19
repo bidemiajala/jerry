@@ -5,6 +5,7 @@ import TerminalCard from '@/components/ui/TerminalCard'
 import GlowButton from '@/components/ui/GlowButton'
 import NeonBadge from '@/components/ui/NeonBadge'
 import { cn } from '@/lib/utils'
+import HowItWorks, { HowItWorksSection, HowItWorksCode, HowItWorksCallout } from '@/components/ui/HowItWorks'
 
 interface ValidationResult {
   similarity_score: number
@@ -14,11 +15,26 @@ interface ValidationResult {
   id: string
 }
 
-const EXAMPLE = {
-  prompt: 'Explain what Playwright is used for',
-  expected: 'Playwright is a browser automation framework used for end-to-end testing of web applications. It supports multiple browsers and enables automated interaction with web pages.',
-  actual: 'Playwright is a tool that lets you automate web browsers for testing purposes. It works with Chrome, Firefox, and Safari.',
-}
+const EXAMPLES = [
+  {
+    label: 'PASS — semantically equivalent',
+    prompt: 'What error should appear for an invalid email on the sign-up form?',
+    expected: 'Please enter a valid email address',
+    actual: 'Invalid email format — check your input',
+  },
+  {
+    label: 'FAIL — meaningfully different',
+    prompt: 'What message should appear after a successful payment?',
+    expected: 'Payment was processed successfully',
+    actual: 'Your order has been saved as a draft',
+  },
+  {
+    label: 'PASS — button label tolerance',
+    prompt: 'Describe the submit button on the form',
+    expected: "The submit button is labelled 'Submit Form'",
+    actual: "I see a green button that says 'Submit'",
+  },
+]
 
 export default function ValidationPage() {
   const [prompt, setPrompt] = useState('')
@@ -50,11 +66,15 @@ export default function ValidationPage() {
     }
   }
 
+  const [exampleIdx, setExampleIdx] = useState(0)
+
   function loadExample() {
-    setPrompt(EXAMPLE.prompt)
-    setExpected(EXAMPLE.expected)
-    setActual(EXAMPLE.actual)
+    const ex = EXAMPLES[exampleIdx % EXAMPLES.length]
+    setPrompt(ex.prompt)
+    setExpected(ex.expected)
+    setActual(ex.actual)
     setResult(null)
+    setExampleIdx((i) => i + 1)
   }
 
   const scorePct = result ? Math.round(result.similarity_score * 100) : 0
@@ -73,6 +93,24 @@ export default function ValidationPage() {
           Claude evaluates whether an AI response semantically matches the expected output.
         </p>
       </div>
+
+      <HowItWorks>
+        <HowItWorksSection title="Mechanism">
+          Claude acts as a semantic judge, not a string comparator. You provide an expected output and an actual output; Claude scores their semantic similarity on a 0–1 scale and explains where they diverge. A similarity score ≥ 0.75 is a PASS.
+        </HowItWorksSection>
+        <HowItWorksCode>{`// Judge system prompt (excerpt from /api/validate)
+You are an expert evaluator assessing AI output quality.
+Compare the expected and actual outputs semantically.
+Return JSON: { similarity_score: 0-1, verdict: "pass"|"fail",
+  reasoning: string, differences: string[] }
+Threshold for pass: similarity_score >= 0.75`}</HowItWorksCode>
+        <HowItWorksSection title="QA use cases">
+          Use this to validate AI-generated test assertions, chatbot responses, or any system where exact string matching would be too brittle. The 3 built-in examples show: (1) semantically equivalent error messages that should PASS, (2) different outcomes that should FAIL, and (3) button label variations that should PASS.
+        </HowItWorksSection>
+        <HowItWorksCallout>
+          Why this matters for QE: traditional assertions break on word order, synonyms, or whitespace. LLM-as-a-Judge catches regressions that matter — when the meaning changes — while ignoring cosmetic differences.
+        </HowItWorksCallout>
+      </HowItWorks>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input panel */}
@@ -133,8 +171,8 @@ export default function ValidationPage() {
                 >
                   {loading ? 'Evaluating...' : '⚖ Evaluate'}
                 </GlowButton>
-                <GlowButton variant="ghost" size="md" onClick={loadExample}>
-                  Load Example
+                <GlowButton variant="ghost" size="md" onClick={loadExample} title={EXAMPLES[exampleIdx % EXAMPLES.length].label}>
+                  Example {(exampleIdx % EXAMPLES.length) + 1}/{EXAMPLES.length}
                 </GlowButton>
               </div>
             </div>
@@ -230,6 +268,7 @@ export default function ValidationPage() {
           )}
         </div>
       </div>
+
     </div>
   )
 }

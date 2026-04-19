@@ -3,10 +3,12 @@ import type React from 'react'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/react'
 import NavBar from '@/components/ui/NavBar'
+import Providers from '@/components/ui/Providers'
 
 export const metadata: Metadata = {
-  title: 'QE Lab // Quality Engineering Platform',
-  description: 'AI-driven testing ecosystem with self-healing tests, LLM test generation, and real-time observability',
+  title: 'Jerry — AI-powered E2E Testing Agent',
+  description: 'Write, heal, and validate end-to-end tests at scale. Gherkin generation, Lighthouse audits, self-healing selectors, and LLM-as-a-Judge.',
+  icons: { icon: '/favicon.svg' },
 }
 
 export default function RootLayout({
@@ -15,13 +17,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className="bg-terminal-bg text-[#c9d1d9] font-mono antialiased min-h-screen">
-        <NavBar />
-        <main className="pt-16">
-          {children}
-        </main>
-        <Analytics />
+        <Providers>
+          <NavBar />
+          <main className="pt-16">
+            {children}
+          </main>
+          <Analytics />
+        </Providers>
       </body>
     </html>
   )

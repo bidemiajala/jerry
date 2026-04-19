@@ -1,0 +1,13 @@
+{
+  "buildCommand": "cd frontend && npm run build && npx playwright install chromium --with-deps",
+  "outputDirectory": "frontend/.next",
+  "framework": "nextjs",
+  "installCommand": "cd frontend && npm install",
+  "functions": {
+    "frontend/app/api/mcp/execute/route.ts": { "maxDuration": 60 },
+    "frontend/app/api/lighthouse/route.ts": { "maxDuration": 60 },
+    "frontend/app/api/tests/run-generated/route.ts": { "maxDuration": 120 },
+    "frontend/app/api/tests/run/route.ts": { "maxDuration": 120 },
+    "frontend/app/api/pipeline/route.ts": { "maxDuration": 180 }
+  }
+}

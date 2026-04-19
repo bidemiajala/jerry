@@ -2,10 +2,19 @@ import { NextRequest } from 'next/server'
 import { randomUUID } from 'crypto'
 import { runPipeline } from '@/lib/pipeline-simulator'
 import { insertPipelineRun, updatePipelineRun } from '@/lib/supabase'
+import { checkRateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/rate-limiter'
 import type { PipelineStage } from '@/types'
 
 export async function POST(req: NextRequest) {
-  const { coverage_threshold = 80 } = await req.json().catch(() => ({}))
+  const ip = getClientIp(req)
+  const rl = checkRateLimit(ip, 'pipeline', LIMITS.pipeline)
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterSeconds)
+
+  const body = await req.json().catch(() => ({}))
+  const rawThreshold = Number(body.coverage_threshold)
+  const coverage_threshold = Number.isFinite(rawThreshold) && rawThreshold >= 0 && rawThreshold <= 100
+    ? rawThreshold
+    : 80
   const run_id = `pipe_${Date.now()}_${randomUUID().slice(0, 8)}`
   const encoder = new TextEncoder()
 

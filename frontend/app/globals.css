@@ -4,14 +4,46 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --neon-green: #4ade80;
-  --neon-cyan: #38bdf8;
-  --neon-orange: #fb923c;
-  --neon-purple: #c084fc;
-  --terminal-bg: #0d1117;
-  --terminal-surface: #161b22;
-  --terminal-border: #21262d;
+/* ─── Dark theme (default) ─── */
+.dark {
+  --neon-green:  74 222 128;   /* #4ade80 */
+  --neon-cyan:   56 189 248;   /* #38bdf8 */
+  --neon-orange: 251 146 60;   /* #fb923c */
+  --neon-purple: 192 132 252;  /* #c084fc */
+
+  --terminal-bg:      13 17 23;
+  --terminal-surface: 22 27 34;
+  --terminal-border:  33 38 45;
+  --terminal-muted:   48 54 61;
+  --terminal-dim:     139 148 158;
+
+  --fg: 201 209 217; /* #c9d1d9 */
+
+  --shadow-neon-green:  0 0 0 1px rgba(74,222,128,0.15);
+  --shadow-neon-cyan:   0 0 0 1px rgba(56,189,248,0.15);
+  --shadow-neon-orange: 0 0 0 1px rgba(251,146,60,0.15);
+  --shadow-neon-purple: 0 0 0 1px rgba(192,132,252,0.15);
+}
+
+/* ─── Light theme ─── */
+:root:not(.dark) {
+  --neon-green:  26 127 55;    /* #1a7f37 */
+  --neon-cyan:   9 105 218;    /* #0969da */
+  --neon-orange: 188 76 0;     /* #bc4c00 */
+  --neon-purple: 130 80 223;   /* #8250df */
+
+  --terminal-bg:      255 255 255;
+  --terminal-surface: 246 248 250;
+  --terminal-border:  208 215 222;
+  --terminal-muted:   175 184 193;
+  --terminal-dim:     87 96 106;
+
+  --fg: 31 35 40; /* #1f2328 */
+
+  --shadow-neon-green:  0 0 0 1px rgba(26,127,55,0.2);
+  --shadow-neon-cyan:   0 0 0 1px rgba(9,105,218,0.2);
+  --shadow-neon-orange: 0 0 0 1px rgba(188,76,0,0.2);
+  --shadow-neon-purple: 0 0 0 1px rgba(130,80,223,0.2);
 }
 
 * {
@@ -24,10 +56,13 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: var(--terminal-bg);
-  color: #c9d1d9;
+  background-color: rgb(var(--terminal-bg));
+  color: rgb(var(--fg));
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
+
+/* Remap hardcoded primary text colour in light mode without touching JSX */
+html:not(.dark) .text-\[\#c9d1d9\] { color: rgb(var(--fg)); }
 
 /* Scrollbar */
 ::-webkit-scrollbar {
@@ -35,28 +70,27 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--terminal-bg);
+  background: rgb(var(--terminal-bg));
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--terminal-border);
+  background: rgb(var(--terminal-border));
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #30363d;
+  background: rgb(var(--terminal-muted));
 }
-
 
 /* Selection */
 ::selection {
-  background: rgba(74, 222, 128, 0.15);
-  color: #c9d1d9;
+  background: rgb(var(--neon-green) / 0.15);
+  color: rgb(var(--fg));
 }
 
-/* Subtle accent text — no harsh glow */
-.text-glow-green  { color: #4ade80; }
-.text-glow-cyan   { color: #38bdf8; }
-.text-glow-orange { color: #fb923c; }
-.text-glow-purple { color: #c084fc; }
+/* Subtle accent text */
+.text-glow-green  { color: rgb(var(--neon-green)); }
+.text-glow-cyan   { color: rgb(var(--neon-cyan)); }
+.text-glow-orange { color: rgb(var(--neon-orange)); }
+.text-glow-purple { color: rgb(var(--neon-purple)); }
 
 /* Recharts overrides */
 .recharts-wrapper {

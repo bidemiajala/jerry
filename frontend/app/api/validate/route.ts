@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { singleCompletion } from '@/lib/anthropic'
 import { insertAIValidation } from '@/lib/supabase'
 import { MODEL } from '@/lib/anthropic'
+import { checkRateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/rate-limiter'
+import { guardText } from '@/lib/input-guard'
 
 const SYSTEM_PROMPT = `You are an impartial AI output evaluator. Your job is to compare an expected output with an actual output and assess semantic similarity.
 
@@ -22,13 +24,31 @@ Scoring guide:
 Threshold: score >= 0.75 = pass, score < 0.75 = fail`
 
 export async function POST(req: NextRequest) {
-  const { prompt, expected_output, actual_output } = await req.json()
+  const ip = getClientIp(req)
+  const rl = checkRateLimit(ip, 'validate', LIMITS.validate)
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterSeconds)
 
-  if (!expected_output?.trim() || !actual_output?.trim()) {
+  const body = await req.json().catch(() => ({}))
+
+  const expectedGuard = guardText(body.expected_output, 2000)
+  if (!expectedGuard.ok) return NextResponse.json({ error: expectedGuard.error }, { status: expectedGuard.status })
+
+  const actualGuard = guardText(body.actual_output, 2000)
+  if (!actualGuard.ok) return NextResponse.json({ error: actualGuard.error }, { status: actualGuard.status })
+
+  // Context prompt is optional — guard but allow empty
+  const promptGuard = guardText(body.prompt ?? '', 500)
+  if (!promptGuard.ok) return NextResponse.json({ error: promptGuard.error }, { status: promptGuard.status })
+
+  const { value: expected_output } = expectedGuard
+  const { value: actual_output } = actualGuard
+  const { value: prompt } = promptGuard
+
+  if (!expected_output || !actual_output) {
     return NextResponse.json({ error: 'expected_output and actual_output are required' }, { status: 400 })
   }
 
-  const userMessage = `Context/Prompt: ${prompt ?? '(none)'}
+  const userMessage = `Context/Prompt: ${prompt || '(none)'}
 
 Expected Output:
 ${expected_output}

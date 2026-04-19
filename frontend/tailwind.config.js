@@ -5,31 +5,32 @@ const config = {
     './components/**/*.{ts,tsx}',
     './lib/**/*.{ts,tsx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         neon: {
-          green: '#4ade80',
-          cyan: '#38bdf8',
-          orange: '#fb923c',
-          purple: '#c084fc',
+          green:  'rgb(var(--neon-green)  / <alpha-value>)',
+          cyan:   'rgb(var(--neon-cyan)   / <alpha-value>)',
+          orange: 'rgb(var(--neon-orange) / <alpha-value>)',
+          purple: 'rgb(var(--neon-purple) / <alpha-value>)',
         },
         terminal: {
-          bg: '#0d1117',
-          surface: '#161b22',
-          border: '#21262d',
-          muted: '#30363d',
-          dim: '#8b949e',
+          bg:      'rgb(var(--terminal-bg)      / <alpha-value>)',
+          surface: 'rgb(var(--terminal-surface) / <alpha-value>)',
+          border:  'rgb(var(--terminal-border)  / <alpha-value>)',
+          muted:   'rgb(var(--terminal-muted)   / <alpha-value>)',
+          dim:     'rgb(var(--terminal-dim)     / <alpha-value>)',
         },
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
       },
       boxShadow: {
-        'neon-green':  '0 0 0 1px rgba(74,222,128,0.15)',
-        'neon-cyan':   '0 0 0 1px rgba(56,189,248,0.15)',
-        'neon-orange': '0 0 0 1px rgba(251,146,60,0.15)',
-        'neon-purple': '0 0 0 1px rgba(192,132,252,0.15)',
+        'neon-green':  'var(--shadow-neon-green)',
+        'neon-cyan':   'var(--shadow-neon-cyan)',
+        'neon-orange': 'var(--shadow-neon-orange)',
+        'neon-purple': 'var(--shadow-neon-purple)',
         'terminal':    '0 1px 3px rgba(0,0,0,0.4)',
       },
       animation: {

@@ -28,7 +28,7 @@ export default function WelcomeStep({ name, onReset }: WelcomeStepProps) {
           !
         </p>
         <p className="text-terminal-dim font-mono text-xs">
-          Your QE Lab account is ready.
+          Your account is ready.
         </p>
       </div>
 

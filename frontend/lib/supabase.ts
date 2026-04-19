@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { TestRun, TestCase, GeneratedTest, AIValidation, PipelineRun } from '@/types'
+import type { TestRun, TestCase, GeneratedTest, AIValidation, PipelineRun, LighthouseReport, MCPRun, MCPAction } from '@/types'
 
 let _client: ReturnType<typeof createClient> | null = null
 
@@ -74,6 +74,15 @@ export async function getTestCases(runId: string): Promise<TestCase[]> {
   return (data ?? []) as TestCase[]
 }
 
+export async function getHealedCount(): Promise<number> {
+  const { count, error } = await getSupabaseClient()
+    .from('test_cases')
+    .select('*', { count: 'exact', head: true })
+    .eq('selector_healed', true)
+  if (error) throw error
+  return count ?? 0
+}
+
 // --- generated_tests ---
 
 export async function insertGeneratedTest(data: Omit<GeneratedTest, 'id' | 'created_at'>) {
@@ -115,5 +124,47 @@ export async function updatePipelineRun(runId: string, data: Partial<PipelineRun
     .from('pipeline_runs')
     .update(data)
     .eq('run_id', runId)
+  if (error) throw error
+}
+
+// --- lighthouse_reports ---
+
+export async function insertLighthouseReport(data: Omit<LighthouseReport, 'id' | 'created_at'>) {
+  const { data: row, error } = await getServiceClient()
+    .from('lighthouse_reports')
+    .insert(data)
+    .select()
+    .single()
+  if (error) throw error
+  return row as LighthouseReport
+}
+
+export async function getLighthouseReports(limit = 10): Promise<LighthouseReport[]> {
+  const { data, error } = await getSupabaseClient()
+    .from('lighthouse_reports')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as LighthouseReport[]
+}
+
+// --- mcp_runs ---
+
+export async function insertMCPRun(data: Omit<MCPRun, 'id' | 'created_at'>) {
+  const { data: row, error } = await getServiceClient()
+    .from('mcp_runs')
+    .insert(data)
+    .select()
+    .single()
+  if (error) throw error
+  return row as MCPRun
+}
+
+export async function updateMCPRun(id: string, actions: MCPAction[], overall_success: boolean) {
+  const { error } = await getServiceClient()
+    .from('mcp_runs')
+    .update({ actions, overall_success })
+    .eq('id', id)
   if (error) throw error
 }

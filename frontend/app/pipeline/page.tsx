@@ -7,6 +7,7 @@ import NeonBadge from '@/components/ui/NeonBadge'
 import StageCard from '@/components/pipeline/StageCard'
 import CoverageGate from '@/components/pipeline/CoverageGate'
 import type { PipelineStage, PipelineStatus } from '@/types'
+import HowItWorks, { HowItWorksSection, HowItWorksCallout } from '@/components/ui/HowItWorks'
 
 const INITIAL_STAGES: PipelineStage[] = [
   { name: 'Install',  status: 'pending' },
@@ -78,6 +79,7 @@ export default function PipelinePage() {
             updateStage(event.stage, {
               status: event.status,
               duration_ms: event.duration_ms,
+              simulated: event.simulated,
               ...(event.coverage_actual !== undefined ? {
                 coverage_actual: event.coverage_actual,
                 gate_passed: event.gate_passed,
@@ -188,7 +190,7 @@ export default function PipelinePage() {
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
             {stages.map((stage, i) => (
               <div key={stage.name} className="relative">
-                <StageCard {...stage} />
+                <StageCard {...stage} simulated={stage.simulated} />
                 {i < stages.length - 1 && (
                   <div className="hidden sm:block absolute top-1/2 -right-1.5 w-3 h-px bg-terminal-border z-10" />
                 )}
@@ -230,6 +232,18 @@ export default function PipelinePage() {
           )}
         </div>
       </div>
+
+      <HowItWorks>
+        <HowItWorksSection title="Real vs simulated stages">
+          The E2E stage runs your actual Playwright test suite and reports real pass/fail results — its duration reflects how long your tests actually take. Install, Lint, Unit, and Deploy are simulated with realistic jitter to keep the demo fast; they are labelled "simulated" on each stage card.
+        </HowItWorksSection>
+        <HowItWorksSection title="Coverage gate">
+          After the Unit stage, Jerry compares a randomly sampled coverage value against your threshold slider. If coverage falls short, the pipeline halts and E2E + Deploy are skipped — the same behaviour as a real CI gate enforced by Istanbul/c8. In a production setup you would replace the random value with output from your coverage reporter.
+        </HowItWorksSection>
+        <HowItWorksCallout>
+          Why this matters for QE: the coverage gate gives QA engineers a single enforced quality bar. No merge can bypass it — if unit coverage drops, E2E never runs and deployment is blocked.
+        </HowItWorksCallout>
+      </HowItWorks>
     </div>
   )
 }

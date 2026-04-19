@@ -9,6 +9,7 @@ interface StageCardProps {
   duration_ms?: number
   coverage_actual?: number
   gate_passed?: boolean
+  simulated?: boolean
 }
 
 const statusConfig: Record<PipelineStatus, { color: string; bg: string; icon: string; label: string }> = {
@@ -27,7 +28,7 @@ const stageIcons: Record<string, string> = {
   Deploy:  '🚀',
 }
 
-export default function StageCard({ name, status, duration_ms, coverage_actual, gate_passed }: StageCardProps) {
+export default function StageCard({ name, status, duration_ms, coverage_actual, gate_passed, simulated }: StageCardProps) {
   const cfg = statusConfig[status]
 
   return (
@@ -56,11 +57,23 @@ export default function StageCard({ name, status, duration_ms, coverage_actual, 
         <span className={cn('text-xl', cfg.color)}>{cfg.icon}</span>
       </div>
 
-      {duration_ms !== undefined && (
-        <div className="text-[10px] font-mono text-terminal-dim">
-          ⏱ {(duration_ms / 1000).toFixed(1)}s
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        {simulated !== undefined && (
+          <span className={cn(
+            'text-[9px] font-mono px-1 py-0.5 rounded border',
+            simulated
+              ? 'text-terminal-muted border-terminal-muted/30'
+              : 'text-neon-cyan border-neon-cyan/30'
+          )}>
+            {simulated ? 'simulated' : 'live'}
+          </span>
+        )}
+        {duration_ms !== undefined && (
+          <div className="text-[10px] font-mono text-terminal-dim">
+            ⏱ {(duration_ms / 1000).toFixed(1)}s
+          </div>
+        )}
+      </div>
 
       {coverage_actual !== undefined && (
         <div className={cn(

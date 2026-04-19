@@ -3,6 +3,7 @@ export type TestCaseStatus = 'passed' | 'failed' | 'skipped'
 export type PipelineStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped'
 export type Verdict = 'pass' | 'fail'
 export type Browser = 'chromium' | 'firefox' | 'webkit'
+export type GenerationMode = 'natural' | 'gherkin'
 
 export interface TestRun {
   id: string
@@ -35,6 +36,7 @@ export interface GeneratedTest {
   requirement: string
   generated_code: string
   model: string
+  source: GenerationMode
   created_at: string
 }
 
@@ -56,6 +58,7 @@ export interface PipelineStage {
   duration_ms?: number
   coverage_actual?: number
   gate_passed?: boolean
+  simulated?: boolean
 }
 
 export interface PipelineRun {
@@ -74,9 +77,38 @@ export interface MCPAction {
   selector?: string
   value?: string
   screenshot_b64?: string
+  result?: string
   timestamp: number
   success?: boolean
   error?: string
+}
+
+export interface MCPRun {
+  id: string
+  instruction: string
+  target_url: string | null
+  actions: MCPAction[]
+  overall_success: boolean | null
+  created_at: string
+}
+
+export interface LighthouseReport {
+  id: string
+  url: string
+  performance: number | null
+  accessibility: number | null
+  best_practices: number | null
+  seo: number | null
+  thresholds: LighthouseThresholds
+  passed: boolean | null
+  created_at: string
+}
+
+export interface LighthouseThresholds {
+  performance: number
+  accessibility: number
+  best_practices: number
+  seo: number
 }
 
 export interface HealingReport {
