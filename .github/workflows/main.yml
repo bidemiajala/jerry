@@ -25,7 +25,7 @@ jobs:
           allow-licenses: 'MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC'
           fail-on-scopes: 'runtime, development'
 
-  backend-test:
+  test:
     runs-on: ubuntu-22.04
 
     strategy:
@@ -41,63 +41,20 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
 
-    - name: Install root dependencies
-      run: npm install
+    - name: Install dependencies
+      run: npm ci
 
-    - name: Install backend dependencies
-      working-directory: ./backend
-      run: npm install
-
-    - name: Run backend linting
-      working-directory: ./backend
+    - name: Run linting
       run: npm run lint
 
-    - name: Run backend tests
-      working-directory: ./backend
-      run: npm test
-      env:
-        NODE_ENV: test
-        PORT: 5001
+    - name: Build frontend
+      run: npm run build
 
-  frontend-test:
-    runs-on: ubuntu-22.04
-    needs: backend-test
-
-    strategy:
-      matrix:
-        node-version: [22.x]
-
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-
-    - name: Install root dependencies
-      run: npm install
-
-    - name: Install frontend dependencies
-      working-directory: ./frontend
-      run: npm install
-
-    - name: Install Playwright and dependencies
+    - name: Install Playwright browsers
       run: npx playwright install --with-deps
       
-    - name: Run frontend linting
-      working-directory: ./frontend
-      run: npm run lint
-
-    - name: Run Cypress component tests
-      run: npm run test:cypress:component
-      env:
-        NODE_ENV: test
-        CI: true
-
-    - name: Run Cypress E2E tests
-      run: npm run test:cypress
+    - name: Run Playwright tests
+      run: npm run test:playwright
       env:
         NODE_ENV: test
         CI: true

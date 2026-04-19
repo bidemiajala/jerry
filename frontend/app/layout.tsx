@@ -6,9 +6,35 @@ import NavBar from '@/components/ui/NavBar'
 import Providers from '@/components/ui/Providers'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://your-domain.com'), // Replace with your actual domain
   title: 'Jerry — AI-powered E2E Testing Agent',
   description: 'Write, heal, and validate end-to-end tests at scale. Gherkin generation, Lighthouse audits, self-healing selectors, and LLM-as-a-Judge.',
-  icons: { icon: '/favicon.svg' },
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
+  openGraph: {
+    title: 'Jerry — AI-powered E2E Testing Agent',
+    description: 'Write, heal, and validate end-to-end tests at scale. Gherkin generation, Lighthouse audits, self-healing selectors, and LLM-as-a-Judge.',
+    url: 'https://your-domain.com', // Replace with your actual domain
+    siteName: 'Jerry',
+    images: [
+      {
+        url: '/og-image.png', // Add your thumbnail image here
+        width: 1200,
+        height: 630,
+        alt: 'Jerry - AI-powered E2E Testing Agent',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Jerry — AI-powered E2E Testing Agent',
+    description: 'Write, heal, and validate end-to-end tests at scale. Gherkin generation, Lighthouse audits, self-healing selectors, and LLM-as-a-Judge.',
+    images: ['/og-image.png'], // Add your thumbnail image here
+  },
 }
 
 export default function RootLayout({
