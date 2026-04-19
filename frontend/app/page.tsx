@@ -1,16 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import MetricWidget from '@/components/dashboard/MetricWidget'
-import PassRateChart from '@/components/dashboard/PassRateChart'
-import BrowserBreakdownChart from '@/components/dashboard/BrowserBreakdownChart'
-import DurationTrendChart from '@/components/dashboard/DurationTrendChart'
-import RecentRunsWidget from '@/components/dashboard/RecentRunsWidget'
 import GlowButton from '@/components/ui/GlowButton'
-import { getSupabaseClient } from '@/lib/supabase'
-import type { TestRun, DashboardMetrics } from '@/types'
-import { formatDuration } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 type FeatureAccent = 'green' | 'cyan' | 'orange' | 'purple'
@@ -102,63 +93,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function DashboardPage() {
-  const [runs, setRuns] = useState<TestRun[]>([])
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  const loadData = useCallback(async () => {
-    try {
-      const res = await fetch('/api/tests/results?limit=20')
-      if (!res.ok) { setLoading(false); return }
-      const data = await res.json()
-      const runsData: TestRun[] = data.runs ?? []
-      setRuns(runsData)
-
-      const totalRuns = runsData.length
-      const passedRuns = runsData.filter((r) => r.status === 'passed').length
-      const passRate = totalRuns > 0 ? Math.round((passedRuns / totalRuns) * 100) : 0
-      const durations = runsData.map((r) => r.duration_ms).filter(Boolean) as number[]
-      const avgDuration = durations.length > 0
-        ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
-        : 0
-      setMetrics({ totalRuns, passRate, avgDuration, healedTests: data.healed_count ?? 0 })
-    } catch {
-      // Supabase not configured — show empty state
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    loadData()
-
-    let channel: ReturnType<ReturnType<typeof getSupabaseClient>['channel']> | null = null
-    try {
-      const client = getSupabaseClient()
-      channel = client
-        .channel('test_runs_realtime')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'test_runs' }, () => {
-          loadData()
-        })
-        .subscribe()
-    } catch {
-      // Supabase not configured — real-time disabled
-    }
-
-    return () => {
-      if (channel) {
-        try { getSupabaseClient().removeChannel(channel) } catch { /* noop */ }
-      }
-    }
-  }, [loadData])
-
   return (
     <div className="max-w-screen-2xl mx-auto px-4 py-10 space-y-12">
 
       {/* ── Hero ── */}
       <div className="space-y-6">
         <div className="space-y-4">
-          {/* Title row */}
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
@@ -173,13 +113,11 @@ export default function DashboardPage() {
                 A working showcase of what QA engineering looks like with AI in the loop —
                 tests that write themselves from plain English or Gherkin, selectors that
                 heal when the UI changes, an AI agent that navigates your app like a human,
-                and a semantic judge for non-deterministic outputs. Every run, generation,
-                validation, and audit is persisted in Supabase and surfaced here in real time.
+                and a semantic judge for non-deterministic outputs.
               </p>
             </div>
           </div>
 
-          {/* CTA row */}
           <div className="flex flex-wrap gap-2 pt-1">
             <Link href="/test-runner">
               <GlowButton variant="green" size="sm">▶ Run Tests</GlowButton>
@@ -206,7 +144,6 @@ export default function DashboardPage() {
                 accentBorder[card.accent],
                 accentHover[card.accent],
               )}>
-                {/* Icon + tag row */}
                 <div className="flex items-center justify-between">
                   <span className={cn(
                     'w-7 h-7 rounded flex items-center justify-center text-sm leading-none flex-shrink-0',
@@ -222,7 +159,6 @@ export default function DashboardPage() {
                   </span>
                 </div>
 
-                {/* Text */}
                 <div className="flex-1 space-y-1.5">
                   <div className="text-xs font-semibold font-mono text-[#c9d1d9] leading-tight">
                     {card.title}
@@ -237,71 +173,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Metrics ── */}
-      <div id="dashboard">
-        <SectionLabel>Live Metrics</SectionLabel>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricWidget
-            label="Total Runs"
-            value={metrics?.totalRuns ?? '--'}
-            icon="▣"
-            accent="green"
-            loading={loading}
-          />
-          <MetricWidget
-            label="Pass Rate"
-            value={metrics?.passRate ?? '--'}
-            unit="%"
-            icon="✓"
-            accent="cyan"
-            trend={metrics ? (metrics.passRate >= 80 ? 'up' : 'down') : undefined}
-            loading={loading}
-          />
-          <MetricWidget
-            label="Avg Duration"
-            value={metrics ? formatDuration(metrics.avgDuration) : '--'}
-            icon="◷"
-            accent="orange"
-            loading={loading}
-          />
-          <MetricWidget
-            label="Healed Tests"
-            value={metrics?.healedTests ?? '--'}
-            icon="⟳"
-            accent="purple"
-            loading={loading}
-          />
-        </div>
-      </div>
-
-      {/* ── Charts ── */}
-      <div className="space-y-4">
-        <SectionLabel>Trends</SectionLabel>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <PassRateChart runs={runs} />
-          </div>
-          <BrowserBreakdownChart runs={runs} />
-        </div>
-      </div>
-
-      {/* ── Recent runs + duration ── */}
-      <div className="space-y-4">
-        <SectionLabel>Activity</SectionLabel>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <RecentRunsWidget runs={runs.slice(0, 8)} loading={loading} />
-          </div>
-          <DurationTrendChart runs={runs} />
-        </div>
-      </div>
-
-      <div className="text-[10px] text-terminal-dim/40 py-4 border-t border-terminal-border flex items-center justify-between">
+      <div className="text-[10px] text-terminal-dim/40 py-4 border-t border-terminal-border">
         <span>jerry · Playwright + Claude + Supabase</span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-neon-green/50 animate-pulse" />
-          real-time
-        </span>
       </div>
     </div>
   )
